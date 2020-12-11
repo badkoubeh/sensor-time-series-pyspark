@@ -53,6 +53,10 @@ def main():
     # Filter data for testing
     # new_data_points_df = new_data_points_df.where(new_data_points_df['datetime'] < datetime(2019, 1, 6))
 
+    # Filter outlier data around one operation site
+    new_data_points_df = new_data_points_df.where((new_data_points_df['latitude'] < 28.7)
+                                                  & (new_data_points_df['longitude'] > -98.8))
+
     sensor_data = new_data_points_df.join(sensor_config_df,
                                           (new_data_points_df['terminal_id'] == sensor_config_df['terminal_id'])
                                           & (new_data_points_df['sensor_type_id'] == sensor_config_df[
@@ -86,8 +90,7 @@ def main():
     # # dropping some columns
     output = output.drop('Battery level')
     output = output.drop('Gas Concentration #6')
-    # output = output.withColumnRenamed('Battery level', 'Battery_level') \
-    #     .withColumnRenamed('Gas Concentration #6', 'Gas_concentration_6')
+
     print("Total records: ", output.count())
     # output.where(output['message_code_id'].isin([66, 67, 68, 69, 100])).show(30)
     output.write.parquet('sensor_data_ts')
