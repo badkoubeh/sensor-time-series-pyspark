@@ -91,13 +91,18 @@ def main():
     output = output.drop('Battery level')
     output = output.drop('Gas Concentration #6')
 
+    # Detecting outliers (the data was fairly clean and no outlier detected)
+    d = {'H2S': output.approxQuantile('H2S', [0.25, 0.75], 0.25),
+         'LEL': output.approxQuantile('H2S', [0.25, 0.75], 0.25),
+         'O2': output.approxQuantile('H2S', [0.25, 0.75], 0.25),
+         'CO': output.approxQuantile('H2S', [0.01, 0.99], 0.25)}
+    for col in d:
+        print('approximate Q1 and Q3 of {0} = {1}'.format(col, d[col]))
+
     print("Total records: ", output.count())
-    # output.where(output['message_code_id'].isin([66, 67, 68, 69, 100])).show(30)
+
     output.write.parquet('sensor_data_ts')
-    # sensor_data.write.format("org.apache.spark.sql.cassandra") \
-    #     .mode('append') \
-    #     .options(**{'confirm.truncate': True}) \
-    #     .options(table='sensor_data', keyspace="bba37").save()
+
 
 
 if __name__ == "__main__":

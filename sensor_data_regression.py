@@ -41,7 +41,7 @@ def main():
                                           sensor_data_df['LEL'],
                                           sensor_data_df['O2'],
                                           sensor_data_df['message_code_name']).orderBy('datetime')
-    # day_df = regression_df.withColumn('date', functions.unix_timestamp(regression_df['datetime'], 'yyyy-MM-dd'))
+
     day_df = regression_df.withColumn('date', regression_df['datetime'].cast(types.DateType()))
     # day_df.show()
     group_df = day_df.groupby(day_df['date']).agg(functions.max('H2S').alias('H2S_max'))
@@ -57,9 +57,9 @@ def main():
 
     split_date = datetime(2020, 11, 1)
     train_set = final_df.where(functions.col('datetime') < split_date) \
-        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['max_H2S_tmrw'])
+        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'],final_df['H2S_max'], final_df['max_H2S_tmrw'])
     test_set = final_df.where(functions.col('datetime') >= split_date)\
-        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['max_H2S_tmrw']).cache()
+        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['H2S_max'], final_df['max_H2S_tmrw']).cache()
 
     x_train, x_val = final_df.randomSplit([0.75, 0.25])
     x_train = x_train.cache()
@@ -73,6 +73,8 @@ def main():
     # dt = DecisionTreeRegressor(featuresCol='features', labelCol='max_H2S_tmrw')
     # rf = RandomForestRegressor(featuresCol='features', labelCol='max_H2S_tmrw')
     # fm = FMRegressor(featuresCol='features', labelCol='max_H2S_tmrw')
+
+
 
     pipeline = Pipeline(stages=[feature_assembler, gbt])
     # pipeline = Pipeline(stages=[feature_assembler, dt])
@@ -92,7 +94,7 @@ def main():
     print('r2 validation score : ', r2_score)
 
     print(model_fit.stages[-1].featureImportances)
-    model_fit.write().overwrite().save('gbt_model')
+    # model_fit.write().overwrite().save('gbt_model')
 
 
 if __name__ == '__main__':
