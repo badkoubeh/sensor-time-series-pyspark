@@ -40,11 +40,10 @@ def forecast_udf(pd_df):
     model_fit = ExponentialSmoothing(ts_train_col, trend='add').fit()
     # model_fit = Holt(ts_train_col).fit()
 
-    # num_forecast_steps = ts_val_col.count()
-    # forecast_res, stderr, conf_int = model_fit.forecast(num_forecast_steps)
-    forecast_res, stderr, conf_int = model_fit.forecast(10)
-    # forecast_series = pd.Series(forecast_res, index=ts_val_col.index)
-    forecast_series = pd.Series(forecast_res)
+    num_forecast_steps = ts_val_col.count()
+    forecast_res, stderr, conf_int = model_fit.forecast(num_forecast_steps)
+
+    forecast_series = pd.Series(forecast_res, index=ts_val_col.index)
     # print(model_fit.summary())
 
     output = pd.DataFrame({'O2': forecast_series})
