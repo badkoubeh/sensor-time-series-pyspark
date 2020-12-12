@@ -57,16 +57,19 @@ def evaluate_models(dataset, p_values, d_values, q_values):
 
 df = pd.read_parquet('sensor_data_ts')
 df = df[['datetime', 'H2S', 'CO', 'LEL', 'O2']]
-# print(df.count())
-# date_range = pd.date_range(start=datetime(2019, 1, 1), end=datetime(2020, 11, 1), freq='H')
+
 ts = df.set_index(pd.DatetimeIndex(df['datetime']), drop=True)
 
-ts_train = ts.loc[ts.index < datetime(2020, 10, 1)]
-ts_val = ts.loc[ts.index >= datetime(2020, 10, 1)]
+ts_train = ts['H2S'].loc[ts.index < datetime(2019, 7, 1)]
 
-ts_col = ts_train['O2'].resample('30T').mean().interpolate(method='polynomial', order=5)
-ts_col = ts_col[ts_col.between(ts_col.quantile(.2), ts_col.quantile(.8))]
-ts_val_col = ts_val['O2'].resample('30T').mean().interpolate(method='linear')
+ts_train = ts_train.resample('30T').mean().ffill()
+
+# remove outliers
+# ts_train = ts_train[ts_train.between(ts_train.quantile(.05), ts_train.quantile(.95))]
+
+x_train = ts_train.loc[ts_train.index < datetime(2019, 6, 1)]
+x_val = ts_train.loc[ts_train.index >= datetime(2019, 6, 1)]
+
 
 # evaluate parameters
 p_values = [4, 6, 8, 10]
@@ -75,30 +78,28 @@ q_values = range(0, 3)
 warnings.filterwarnings("ignore")
 # evaluate_models(ts_col.values, p_values, d_values, q_values)
 
-model_fit = ARIMA(ts_col, order=(1, 1, 1)).fit()
+model_fit = ARIMA(x_train, order=(1, 0, 0)).fit()
 # model_fit = Holt(ts_col, initialization_method="estimated").fit()
 # model_fit = ExponentialSmoothing(ts_col, initialization_method="estimated").fit()
 
 # print(model_fit.summary())
-num_forecast_steps = ts_val_col.count()
+num_forecast_steps = x_val.count()
 # forecast_res = model_fit.forecast(num_forecast_steps)
 forecast_res, stderr, conf_int = model_fit.forecast(num_forecast_steps, alpha=0.05)
-forecast_series = pd.Series(forecast_res, index=ts_val_col.index)
-lower_series = pd.Series(conf_int[:, 0], index=ts_val_col.index)
-upper_series = pd.Series(conf_int[:, 1], index=ts_val_col.index)
+forecast_series = pd.Series(forecast_res, index=x_val.index)
+lower_series = pd.Series(conf_int[:, 0], index=x_val.index)
+upper_series = pd.Series(conf_int[:, 1], index=x_val.index)
 output = pd.DataFrame({'O2': forecast_series})
-# print(output.head())
-# print(ts_val_col.head())
 
 plt.figure(figsize=(12, 5), dpi=100)
-plt.plot(ts_col, label='training')
-plt.plot(ts_val_col, label='actual')
+plt.plot(x_train, label='training')
+plt.plot(x_val, label='actual')
 plt.plot(forecast_series, label='forecast')
-plt.fill_between(lower_series.index, lower_series, upper_series,color='k', alpha=.15)
+plt.fill_between(lower_series.index, lower_series, upper_series, color='k', alpha=.15)
 plt.title('Forecast vs Actuals')
 plt.legend(loc='upper left', fontsize=8)
 # plt.show()
 
-result = seasonal_decompose(ts_col, model='additive', freq=365)
+result = seasonal_decompose(x_train, model='additive', freq=365)
 result.plot()
 plt.show()
