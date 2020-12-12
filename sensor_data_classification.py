@@ -32,13 +32,13 @@ def main():
     test_df = sensor_data_df.where(~condition).cache()
 
     """ CLASSIFICATION PROBLEM FOR GAS EVENT IDENTIFICATION"""
-    classificaiton_set = train_df.select(train_df['message_code_name'].alias('target'),
+    classification_set = train_df.select(train_df['message_code_name'].alias('target'),
                                          train_df['H2S'],
                                          train_df['CO'],
                                          train_df['LEL'],
                                          train_df['O2'])
 
-    train_set, validation_set = classificaiton_set.randomSplit([0.75, 0.25])
+    train_set, validation_set = classification_set.randomSplit([0.75, 0.25])
     train_set.cache()
     validation_set.cache()
 

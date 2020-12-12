@@ -34,42 +34,6 @@ def main():
                                            sensor_data_df['LEL'],
                                            sensor_data_df['O2']).orderBy(sensor_data_df['datetime'].asc())
 
-    condition = (sensor_data_df['datetime'] < datetime(2020, 10, 1))
-    train_df = sensor_data_df.where(condition)
-    test_df = sensor_data_df.where(~condition).cache()
-
-    """ CLASSIFICATION PROBLEM FOR GAS EVENT IDENTIFICATION"""
-    # classificaiton_set = train_df.select(train_df['message_code_name'].alias('target'),
-    #                                      train_df['H2S'],
-    #                                      train_df['CO'],
-    #                                      train_df['LEL'],
-    #                                      train_df['O2'])
-    #
-    # train_set, validation_set = classificaiton_set.randomSplit([0.75, 0.25])
-    # train_set.cache()
-    # validation_set.cache()
-    #
-    # # message_code_name is the target column representing gas events (Normal, GasHighAlarm, GasLowAlarm, GasAlarm)
-    # # sql_transformer_statement = "SELECT datetime ,H2S, LEL, O2, CO, message_code_name AS target " \
-    # # #                               "FROM __THIS__"
-    #
-    # # sql_transformer = SQLTransformer(statement=sql_transformer_statement_2)
-    # assemble_features = VectorAssembler(inputCols=['H2S', 'LEL', 'O2', 'CO']
-    #                                     , outputCol='features')
-    # target_indexer = StringIndexer(inputCol='target', outputCol='label').fit(train_set)
-    # label_converter = IndexToString(inputCol='label', outputCol='predicted_target')
-    # print(target_indexer.labels)
-    # classifier = MultilayerPerceptronClassifier(layers=[4, 20, 4])
-    # pipeline = Pipeline(stages=[assemble_features, target_indexer, classifier, label_converter])
-    # model = pipeline.fit(train_set)
-    #
-    # predictions = model.transform(validation_set)
-    # predictions.select(['target', 'predicted_target']).show(30)
-    #
-    # evaluator = MulticlassClassificationEvaluator(predictionCol='prediction', labelCol='label')
-    # prediction_score = evaluator.evaluate(predictions)
-    # print('Gas Events Prediction Score: ', prediction_score)
-
     """ REGRESSION PROBLEM FOR GAS DATA PREDICTION"""
     regression_df = sensor_data_df.select(sensor_data_df['datetime'],
                                           sensor_data_df['H2S'],
@@ -89,12 +53,13 @@ def main():
 
     final_df = day_df.join(max_H2S_tmrw_df, 'date').repartition(100)
     final_df = final_df.withColumn('timestamp', functions.unix_timestamp(final_df['datetime'])) \
-        .orderBy(final_df['datetime'])
+        .orderBy(final_df['datetime']).dropna()
 
     split_date = datetime(2020, 11, 1)
     train_set = final_df.where(functions.col('datetime') < split_date) \
-        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['max_H2S_tmrw']).dropna()
-    test_set = final_df.where(functions.col('datetime') >= split_date).cache()
+        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['max_H2S_tmrw'])
+    test_set = final_df.where(functions.col('datetime') >= split_date)\
+        .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['max_H2S_tmrw']).cache()
 
     x_train, x_val = final_df.randomSplit([0.75, 0.25])
     x_train = x_train.cache()
