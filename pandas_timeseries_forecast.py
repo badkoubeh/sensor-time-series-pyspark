@@ -78,7 +78,7 @@ q_values = range(0, 3)
 warnings.filterwarnings("ignore")
 # evaluate_models(ts_col.values, p_values, d_values, q_values)
 
-model_fit = ARIMA(x_train, order=(1, 0, 0)).fit()
+model_fit = ARIMA(x_train, order=(1, 1, 1)).fit()
 # model_fit = Holt(ts_col, initialization_method="estimated").fit()
 # model_fit = ExponentialSmoothing(ts_col, initialization_method="estimated").fit()
 
