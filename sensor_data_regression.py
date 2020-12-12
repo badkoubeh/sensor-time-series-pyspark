@@ -26,14 +26,6 @@ def main():
     #                                                                              keyspace=keyspace).load()
     sensor_data_df = spark.read.parquet('sensor_data_ts')
 
-    # creating ML pipelines for classification and regression problems
-    sensor_data_df = sensor_data_df.select(sensor_data_df['datetime'],
-                                           sensor_data_df['message_code_name'],
-                                           sensor_data_df['H2S'],
-                                           sensor_data_df['CO'],
-                                           sensor_data_df['LEL'],
-                                           sensor_data_df['O2']).orderBy(sensor_data_df['datetime'].asc())
-
     """ REGRESSION PROBLEM FOR GAS DATA PREDICTION"""
     regression_df = sensor_data_df.select(sensor_data_df['datetime'],
                                           sensor_data_df['H2S'],
