@@ -53,7 +53,7 @@ def main():
     test_set = final_df.where(functions.col('datetime') >= split_date)\
         .select(final_df['CO'], final_df['LEL'], final_df['O2'], final_df['H2S'], final_df['H2S_max'], final_df['max_H2S_tmrw']).cache()
 
-    x_train, x_val = final_df.randomSplit([0.75, 0.25])
+    x_train, x_val = train_set.randomSplit([0.75, 0.25])
     x_train = x_train.cache()
     x_val = x_val.cache()
 
