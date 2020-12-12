@@ -63,6 +63,8 @@ def main():
     prediction_score = evaluator.evaluate(predictions)
     print('Gas Events Prediction Score: ', prediction_score)
 
+    model.write().overwrite().save('mlp_model')
+
 
 if __name__ == '__main__':
     # cluster_seeds = ['199.60.17.103', '199.60.17.105']
